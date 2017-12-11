@@ -76,7 +76,7 @@ def record():
         if byteorder == 'big':
             snd_data.byteswap()
         r.extend(snd_data)
-        stream.write(snd_data.tobytes())
+        stream.write(snd_data.tobytes() * 5)
         silent = is_silent(snd_data)
 
         if silent and snd_started:
