@@ -1,5 +1,10 @@
 from tkinter import *
 from tkinter import ttk
+import matplotlib
+
+matplotlib.use('TkAgg')
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 
 
 # def calculate(*args):
@@ -70,10 +75,32 @@ def button_test(text):
 class MainPage(ttk.Frame):
     def __init__(self, parent, controller):
         ttk.Frame.__init__(self, parent)
-        label = ttk.Label(self, text="Main Page")
+        label = ttk.Label(self, text="Sound graph")
         label.pack(padx=10, pady=10)
 
         button = ttk.Button(self, text="Click me", command=lambda: button_test("lul"))
+        button.pack(pady=5)
+
+        fig = Figure(figsize=(6, 6))
+        plot = fig.add_subplot(1, 1, 1)
+        plot.plot([0, 1, 3, 4, 5], [5, 12, 51, 11, 2])
+
+        canvas = FigureCanvasTkAgg(fig, self)
+        canvas.show()
+        canvas.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=True)
+        toolbar = NavigationToolbar2TkAgg(canvas, self)
+        toolbar.update()
+        canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=True)
+
+
+class AnimatePlot(ttk.Frame):
+    def __init__(self, parent, controller):
+        ttk.Frame.__init__(self, parent)
+        label = ttk.Label(self, text="Graph Test")
+        label.pack(padx=5, pady=5)
+
+        button = ttk.Button(self, text="Back to main page",
+                            command=lambda: controller.show_frame(MainPage))
         button.pack(pady=5)
 
 
