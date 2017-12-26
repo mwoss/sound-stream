@@ -87,10 +87,17 @@ class MainPage(ttk.Frame):
 
         canvas = FigureCanvasTkAgg(fig, self)
         canvas.show()
-        canvas.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=True)
-        toolbar = NavigationToolbar2TkAgg(canvas, self)
-        toolbar.update()
+        # canvas.get_tk_widget().pack(side=BOTTOM, fill=BOTH, expand=True)
+        # toolbar = NavigationToolbar2TkAgg(canvas, self)
+        # toolbar.update()
         canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=True)
+
+        button_fft = ttk.Button(self, text="FFT Visualization", command=lambda: button_test("fft"))
+        button_fft.pack()
+        button_fft.grid_rowconfigure(3, weight=2)
+        button_sound_wave = ttk.Button(self, text="Sound Wave Visualization", command=lambda: button_test("sound wave"))
+        button_sound_wave.pack()
+        button_sound_wave.grid_rowconfigure(3, weight=2)
 
 
 class AnimatePlot(ttk.Frame):

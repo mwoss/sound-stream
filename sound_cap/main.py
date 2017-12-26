@@ -1,6 +1,9 @@
 from sys import byteorder
 from array import array
 from struct import pack
+from matplotlib import pyplot as plt
+from matplotlib import animation as an
+import numpy as np
 
 import pyaudio
 import wave
@@ -9,7 +12,6 @@ THRESHOLD = 500
 CHUNK_SIZE = 1024
 FORMAT = pyaudio.paInt16
 RATE = 44100
-
 
 
 def is_silent(snd_data):
@@ -69,14 +71,14 @@ def record():
     snd_started = False
 
     r = array('h')
-
     while 1:
         # little endian, signed short
         snd_data = array('h', stream.read(CHUNK_SIZE))
         if byteorder == 'big':
             snd_data.byteswap()
         r.extend(snd_data)
-        stream.write(snd_data.tobytes() * 5)
+        stream.write(snd_data.tobytes())
+
         silent = is_silent(snd_data)
 
         if silent and snd_started:
@@ -99,8 +101,10 @@ def record():
 
 
 def record_to_file(path):
+    print("asdasd6")
     sample_width, data = record()
     data = pack('<' + ('h' * len(data)), *data)
+    print("sdasd")
 
     with wave.open(path, 'wb') as wf:
         wf.setnchannels(1)
@@ -113,5 +117,3 @@ def main():
     print("please speak a word into the microphone")
     record_to_file('demo.wav')
     print("done - result written to demo.wav")
-
-
