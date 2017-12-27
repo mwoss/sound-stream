@@ -1,10 +1,11 @@
-from PyQt4 import QtGui, QtCore
-
 import sys
-import sound_cap.fft.ui_main as ui_main
+
 import numpy as np
 import pyqtgraph
-import sound_cap.fft.SWHear as SWHear
+from PyQt4 import QtGui, QtCore
+
+import sound_cap.SWHear as SWHear
+import sound_cap.ui_main as ui_main
 
 
 class ExampleApp(QtGui.QMainWindow, ui_main.Ui_MainWindow):
@@ -37,7 +38,7 @@ class ExampleApp(QtGui.QMainWindow, ui_main.Ui_MainWindow):
         QtCore.QTimer.singleShot(1, self.update)  # QUICKLY repeat
 
 
-if __name__ == "__main__":
+def main():
     app = QtGui.QApplication(sys.argv)
     form = ExampleApp()
     form.show()
