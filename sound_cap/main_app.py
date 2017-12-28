@@ -1,18 +1,21 @@
-import sys
-
+from sys import argv, exit
 import numpy as np
 import pyqtgraph
 from PyQt4 import QtGui, QtCore
 
 import sound_cap.SWHear as SWHear
 import sound_cap.ui_main as ui_main
+from sound_cap.utils.logger import Logger
+
+LOG = Logger()
 
 
-class ExampleApp(QtGui.QMainWindow, ui_main.Ui_MainWindow):
+class SoundStream(QtGui.QMainWindow, ui_main.Ui_MainWindow):
     def __init__(self, parent=None):
         pyqtgraph.setConfigOption('background', 'w')  # before loading widget
-        super(ExampleApp, self).__init__(parent)
+        super(SoundStream, self).__init__(parent)
         self.setupUi(self)
+        self.setStyleSheet("background-color: #283747;")
         self.grFFT.plotItem.showGrid(True, True, 0.7)
         self.grPCM.plotItem.showGrid(True, True, 0.7)
         self.maxFFT = 0
@@ -21,7 +24,7 @@ class ExampleApp(QtGui.QMainWindow, ui_main.Ui_MainWindow):
         self.ear.stream_start()
 
     def update(self):
-        if not self.ear.data is None and not self.ear.fft is None:
+        if self.ear.data is not None and self.ear.fft is not None:
             pcmMax = np.max(np.abs(self.ear.data))
             if pcmMax > self.maxPCM:
                 self.maxPCM = pcmMax
@@ -39,9 +42,10 @@ class ExampleApp(QtGui.QMainWindow, ui_main.Ui_MainWindow):
 
 
 def main():
-    app = QtGui.QApplication(sys.argv)
-    form = ExampleApp()
-    form.show()
-    form.update()  # start with something
-    app.exec_()
-    print("DONE")
+    LOG.log_msg("Start sound streaming.")
+    app = QtGui.QApplication(argv)
+    window = SoundStream()
+    window.show()
+    window.update()
+    exit(app.exec_())
+    LOG.log_msg("Sound streaming closed")

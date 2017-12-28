@@ -3,10 +3,12 @@ import time
 import numpy as np
 import threading
 
+np.seterr(all='warn')
+
 
 def getFFT(data, rate):
     """Given some data and rate, returns FFTfreq and FFT (half)."""
-    data = data * np.hamming(len(data))
+    data *= np.hamming(len(data))
     fft = np.fft.fft(data)
     fft = np.abs(fft)
     # fft=10*np.log10(fft)
@@ -143,13 +145,13 @@ class SWHear():
         self.stream_thread_new()
 
 
-if __name__ == "__main__":
-    ear = SWHear(updatesPerSecond=10)  # optinoally set sample rate here
-    ear.stream_start()  # goes forever
-    lastRead = ear.chunksRead
-    while True:
-        while lastRead == ear.chunksRead:
-            time.sleep(.01)
-        print(ear.chunksRead, len(ear.data))
-        lastRead = ear.chunksRead
-    print("DONE")
+        # if __name__ == "__main__":
+        #     ear = SWHear(updatesPerSecond=10)  # optinoally set sample rate here
+        #     ear.stream_start()  # goes forever
+        #     lastRead = ear.chunksRead
+        #     while True:
+        #         while lastRead == ear.chunksRead:
+        #             time.sleep(.01)
+        #         print(ear.chunksRead, len(ear.data))
+        #         lastRead = ear.chunksRead
+        #     print("DONE")

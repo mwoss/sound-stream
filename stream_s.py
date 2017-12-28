@@ -1,3 +1,4 @@
-from sound_cap.main import main
+from sound_cap.main_app import main
 
 main()
+
