@@ -20,7 +20,7 @@ class SoundStream(QtGui.QMainWindow, ui_main.Ui_MainWindow):
         self.grPCM.plotItem.showGrid(True, True, 0.7)
         self.maxFFT = 0
         self.maxPCM = 0
-        self.ear = SWHear.SWHear(rate=44100, updatesPerSecond=20)
+        self.ear = SWHear.SWHear(rate=44100, refresh_rate=20)
         self.ear.stream_start()
 
     def update(self):
