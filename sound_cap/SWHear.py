@@ -2,7 +2,9 @@ import pyaudio
 import time
 import numpy as np
 import threading
+
 from sound_cap.utils.logger import Logger
+from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound
 
 np.seterr(all='warn')
 LOG = Logger()
@@ -33,70 +35,61 @@ class SWHear:
         frequencies to be analyzed if using a FFT later
     """
 
-    def __init__(self, device=1, rate=None, refresh_rate=10):
+    def __init__(self, device=1, refresh_rate=10):
         self.audio_rec = pyaudio.PyAudio()
+        self.devices_name = []
+        self.mics_rate = []
         self.chunk_size = 4096
-        self.refresh_rate = refresh_rate
         self.chunksRead = 0
-        self.device = device
-        self.rate = rate
-
-    ### SYSTEM TESTS
+        self.refresh_rate = refresh_rate
+        self.devices_id = self.get_available_mics()
 
     def valid_low_rate(self, device):
         """set the rate to the lowest supported audio rate."""
         for testrate in [44100]:
-            if self.valid_test(device, testrate):
+            if self.validation_test(device):
                 return testrate
         print("SOMETHING'S WRONG! I can't figure out how to use DEV", device)
         return None
 
-    def valid_test(self, device, rate=44100):
-        """given a device ID and a rate, return TRUE/False if it's valid."""
+    def validation_test(self, device):
+        LOG.log_msg("Checking device ID: {0}".format(device))
+        info = self.audio_rec.get_device_info_by_index(device)
+        if info["maxInputChannels"] <= 0:
+            return False
         try:
-            self.info = self.audio_rec.get_device_info_by_index(device)
-            if not self.info["maxInputChannels"] > 0:
-                return False
             stream = self.audio_rec.open(format=pyaudio.paInt16, channels=1,
-                                         input_device_index=device, frames_per_buffer=self.chunk_size,
-                                         rate=int(self.info["defaultSampleRate"]), input=True)
+                                         input_device_index=device,
+                                         frames_per_buffer=self.chunk_size,
+                                         rate=int(info["defaultSampleRate"]),
+                                         input=True)
+
             stream.close()
+            LOG.log_msg("Device ID: {0} is working properly".format(device))
+            self.devices_name.append(info['name'])
+            self.mics_rate.append(int(info["defaultSampleRate"]))
             return True
-        except:
+        except ValueError:
+            LOG.log_msg("Device ID: {0} isnt working".format(device))
             return False
 
     def get_available_mics(self):
-        """
-        See which devices can be opened for microphone input.
-        call this when no PyAudio object is loaded.
-        """
+        LOG.log_msg("Searching for microphones devices")
         mics = []
         for device in range(self.audio_rec.get_device_count()):
-            if self.valid_test(device):
+            if self.validation_test(device):
                 mics.append(device)
         if len(mics) == 0:
-            raise N
-        else:
-            print("found %d microphone devices: %s" % (len(mics), mics))
-
+            raise MicrophoneDeviceNotFound
+        LOG.log_msg("Microphones found: {0}".format(mics))
         return mics
-
-    ### SETUP AND SHUTDOWN
 
     def initialization(self):
         """run this after changing settings (like rate) before recording"""
-        if self.device is None:
-            self.device = self.get_available_mics()[0]  # pick the first one
-        if self.rate is None:
-            self.rate = self.valid_low_rate(self.device)
-        self.chunk_size = int(self.rate / self.refresh_rate)  # hold one tenth of a second in memory
-        if not self.valid_test(self.device, self.rate):
-            print("guessing a valid microphone device/rate...")
-            self.device = self.get_available_mics()[0]  # pick the first one
-            self.rate = self.valid_low_rate(self.device)
-        self.datax = np.arange(self.chunk_size) / float(self.rate)
+        self.chunk_size = int(self.mics_rate[0] / self.refresh_rate)
+        self.y_points = np.arange(self.chunk_size) / float(self.mics_rate[0])
         LOG.log_msg("Streaming from device: {0} with ID: {1} at rate: {2} Hz"
-                    .format(self.info['name'], self.device, self.rate))
+                    .format(self.devices_name[0], self.devices_id[0], self.mics_rate[0]))
 
     def close(self):
         """gently detach from things."""
@@ -107,13 +100,11 @@ class SWHear:
         self.stream.stop_stream()
         self.audio_rec.terminate()
 
-    ### STREAM HANDLING
-
     def stream_readchunk(self):
         """reads some audio and re-launches itself"""
         try:
             self.data = np.fromstring(self.stream.read(self.chunk_size), dtype=np.int16)
-            self.fftx, self.fft = fourier_frequency(self.data, self.rate)
+            self.fftx, self.fft = fourier_frequency(self.data, self.mics_rate[0])
 
         except Exception as E:
             print(" -- exception! terminating...")
@@ -140,5 +131,5 @@ class SWHear:
         self.fft = None
         self.dataFiltered = None  # same
         self.stream = self.audio_rec.open(format=pyaudio.paInt16, channels=1,
-                                          rate=self.rate, input=True, frames_per_buffer=self.chunk_size)
+                                          rate=self.mics_rate[0], input=True, frames_per_buffer=self.chunk_size)
         self.stream_thread_new()
