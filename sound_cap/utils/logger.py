@@ -26,6 +26,6 @@ class Logger(metaclass=Singleton):
     def error_msg(self, msg):
         self.logger.error(msg)
 
-    def set_logging_lvl(self, level):
+    def set_logger_lvl(self, level):
         log_level = logging.getLevelName(level)
         self.logger.setLevel(log_level)
