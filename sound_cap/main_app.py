@@ -3,7 +3,7 @@ import numpy as np
 import pyqtgraph
 from PyQt4 import QtGui, QtCore
 
-import sound_cap.audio_stream as SWHear
+from sound_cap.audio_stream import AudioStream
 import sound_cap.ui_main as ui_main
 from sound_cap.utils.logger import Logger
 
@@ -20,7 +20,7 @@ class SoundStreamVisualization(QtGui.QMainWindow, ui_main.Ui_MainWindow):
         self.grPCM.plotItem.showGrid(True, True, 0.7)
         self.maxFFT = 0
         self.maxPCM = 0
-        self.ear = SWHear.AudioStream(refresh_rate=20)
+        self.ear = AudioStream(refresh_rate=20)
         self.ear.stream_start()
 
     def update(self):

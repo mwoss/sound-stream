@@ -4,14 +4,13 @@ import numpy as np
 from threading import Thread
 
 from sound_cap.utils.logger import Logger
-from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound
+from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound, DataStreamVisualizationError
 
 np.seterr(all='warn')
 LOG = Logger()
 
 
 def fourier_frequency(data, rate):
-    """Given some data and rate, returns FFTfreq and FFT (half)."""
     # smoothed_data = data * np.hamming(len(data))
     fft = np.abs(np.fft.fft(data))
     freq = np.fft.fftfreq(len(fft), 1.0 / rate)
@@ -19,23 +18,7 @@ def fourier_frequency(data, rate):
 
 
 class AudioStream:
-    """
-    The SWHear class is provides access to continuously recorded
-    (and mathematically processed) microphone data.
-
-    Arguments:
-
-        device - the number of the sound card input to use. Leave blank
-        to automatically detect one.
-
-        rate - sample rate to use. Defaults to something supported.
-
-        updatesPerSecond - how fast to record new data. Note that smaller
-        numbers allow more data to be accessed and therefore high
-        frequencies to be analyzed if using a FFT later
-    """
-
-    def __init__(self, device=1, refresh_rate=10):
+    def __init__(self, refresh_rate=10):
         self.audio_rec = pyaudio.PyAudio()
         self.main_thread = None
         self.chunk_size = 4096
@@ -43,8 +26,8 @@ class AudioStream:
         self.devices_info = {}
         self.points_range = None
         self.data = None
-        self.fft_data = []
-        self.fft_frequency = []
+        self.fft_data = None
+        self.fft_frequency = None
         self.mic_id = None
         self.stream = None
 
@@ -81,7 +64,7 @@ class AudioStream:
 
     def choose_mic(self):
         LOG.log_msg("Choosing microphone")
-        time.sleep(0.5)
+        time.sleep(0.2)
         if len(self.devices_info) > 1:
             for mic_k, mic_val in self.devices_info.items():
                 print("Mic ID: {0}, specs: {1}".format(mic_k, mic_val))
@@ -103,15 +86,8 @@ class AudioStream:
                             self.mic_id,
                             self.devices_info[self.mic_id]['mic_rate']))
 
-    def close(self):
-        """gently detach from things."""
-        print(" -- sending stream termination command...")
-        self.keepRecording = False  # the threads should self-close
-        while (self.t.isAlive()):  # wait for all threads to close
-            time.sleep(.1)
-        self.stream.stop_stream()
-        self.audio_rec.terminate()
-
+    # TODO: handle closing thread after exception and on app exit
+    # TODO: handle closing stream
     def read_data_chunk(self):
         while True:
             try:
@@ -119,26 +95,8 @@ class AudioStream:
                 self.fft_frequency, self.fft_data = fourier_frequency(self.data,
                                                                       self.devices_info[self.mic_id]['mic_rate'])
             except Exception:
-                pass
-        try:
-            self.data = np.fromstring(self.stream.read(self.chunk_size), dtype=np.int16)
-            self.fft_frequency, self.fft_data = fourier_frequency(self.data,
-                                                                  self.devices_info[self.mic_id]['mic_rate'])
-
-        except Exception as e:
-            print(" -- exception! terminating...")
-            print(e, "\n" * 5)
-            self.keepRecording = False
-        if self.keepRecording:
-            self.stream_thread_new()
-        else:
-            self.stream.close()
-            self.audio_rec.terminate()
-            print(" -- stream STOPPED")
-
-    # def stream_thread_new(self):
-    #     self.t = Thread(target=self.stream_readchunk)
-    #     self.t.start()
+                LOG.error_msg("Error while processing data from microphone")
+                raise DataStreamVisualizationError("Data processing error")
 
     def stream_start(self):
         self.initialization()
@@ -148,5 +106,6 @@ class AudioStream:
                                           input=True,
                                           frames_per_buffer=self.chunk_size)
 
-        self.main_thread = Thread(target=self.read_data_chunk())
+        self.main_thread = Thread(target=self.read_data_chunk, args=())
+        self.main_thread.daemon = True
         self.main_thread.start()
