@@ -6,7 +6,6 @@ from threading import Thread
 from sound_cap.utils.logger import Logger
 from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound, DataStreamVisualizationError
 
-np.seterr(all='warn')
 LOG = Logger()
 
 
@@ -18,11 +17,12 @@ def fourier_frequency(data, rate):
 
 
 class AudioStream:
-    def __init__(self, refresh_rate=10):
+    def __init__(self, scalar=5, refresh_rate=10):
         self.audio_rec = pyaudio.PyAudio()
         self.main_thread = None
         self.chunk_size = 4096
         self.refresh_rate = refresh_rate
+        self.scalar = scalar
         self.devices_info = {}
         self.points_range = None
         self.data = None
@@ -51,7 +51,6 @@ class AudioStream:
         except ValueError:
             LOG.error_msg("Device ID: {0} isnt working".format(device_id))
 
-    # TODO: handle exception in main_app
     def get_available_mics(self):
         LOG.log_msg("Searching for microphones devices")
         mics_info = {}
@@ -86,16 +85,13 @@ class AudioStream:
                             self.mic_id,
                             self.devices_info[self.mic_id]['mic_rate']))
 
-    # TODO: handle closing thread after exception and on app exit
-    # TODO: handle closing stream
     def read_data_chunk(self):
         while True:
             try:
-                self.data = np.fromstring(self.stream.read(self.chunk_size), dtype=np.int16)
+                self.data = np.fromstring(self.stream.read(self.chunk_size), dtype=np.int16) / self.scalar
                 self.fft_frequency, self.fft_data = fourier_frequency(self.data,
                                                                       self.devices_info[self.mic_id]['mic_rate'])
             except Exception:
-                LOG.error_msg("Error while processing data from microphone")
                 raise DataStreamVisualizationError("Data processing error")
 
     def stream_start(self):

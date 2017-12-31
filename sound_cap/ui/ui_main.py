@@ -1,5 +1,6 @@
 from PyQt4 import QtGui, QtCore
-#from PyQt5 import QtCore, QtGui
+
+# from PyQt5 import QtCore, QtGui
 # from PyQt4.uic.properties import QtCore, QtGui
 
 try:
@@ -10,11 +11,14 @@ except AttributeError:
 
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
+
+
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig, _encoding)
 except AttributeError:
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig)
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -60,5 +64,6 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow", None))
         self.label.setText(_translate("MainWindow", "frequency data (FFT):", None))
         self.label_2.setText(_translate("MainWindow", "raw data (PCM):", None))
+
 
 from pyqtgraph import PlotWidget
