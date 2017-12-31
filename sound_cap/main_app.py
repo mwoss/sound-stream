@@ -31,14 +31,13 @@ class SoundStreamVisualization(QtGui.QMainWindow, ui_main.Ui_MainWindow):
                 self.grPCM.plotItem.setRange(yRange=[-pcmMax, pcmMax])
             if np.max(self.ear.fft_data) > self.maxFFT:
                 self.maxFFT = np.max(np.abs(self.ear.fft_data))
-                # self.grFFT.plotItem.setRange(yRange=[0,self.maxFFT])
                 self.grFFT.plotItem.setRange(yRange=[0, 1])
             self.pbLevel.setValue(1000 * pcmMax / self.maxPCM)
             pen = pyqtgraph.mkPen(color='b')
             self.grPCM.plot(self.ear.points_range, self.ear.data, pen=pen, clear=True)
             pen = pyqtgraph.mkPen(color='r')
             self.grFFT.plot(self.ear.fft_frequency, self.ear.fft_data / self.maxFFT, pen=pen, clear=True)
-        QtCore.QTimer.singleShot(1, self.update)  # QUICKLY repeat
+        QtCore.QTimer.singleShot(1, self.update)
 
 
 def main():
