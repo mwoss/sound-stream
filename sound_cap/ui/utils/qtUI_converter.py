@@ -2,7 +2,7 @@ from PyQt4 import uic
 from sys import argv
 
 
-def ui_file_python_convert(file_name: str):
+def ui_file_python_convert(file_name):
     try:
         with open(file_name, 'r') as qtUi:
             with open(file_name.replace('.ui', '.py'), 'w') as pythonUI:

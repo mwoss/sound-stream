@@ -1,4 +1,4 @@
-from sys import argv, exit
+from sys import argv
 
 import numpy as np
 import pyqtgraph
@@ -13,14 +13,13 @@ from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound, \
 LOG = Logger()
 
 
-class SoundStreamVisualization(QtGui.QMainWindow, ui_main.Ui_MainWindow):
+class SoundStreamVisualization(QtGui.QMainWindow, ui_main.Ui_AudioVisualizer):
     def __init__(self, parent=None):
         pyqtgraph.setConfigOption('background', 'w')
         super(SoundStreamVisualization, self).__init__(parent)
         self.setupUi(self)
-        self.setStyleSheet("background-color: #283747;")
-        self.grFFT.plotItem.showGrid(True, True, 0.7)
-        self.grPCM.plotItem.showGrid(True, True, 0.7)
+        self.fft_plot.plotItem.showGrid(True, True, 0.7)
+        self.pcm_plot.plotItem.showGrid(True, True, 0.7)
         self.max_fft = 0
         self.max_normal = 0
         self.audio = AudioStream(refresh_rate=20)
@@ -31,16 +30,16 @@ class SoundStreamVisualization(QtGui.QMainWindow, ui_main.Ui_MainWindow):
             temp_max = np.max(np.abs(self.audio.data))
             if temp_max > self.max_normal:
                 self.max_normal = temp_max
-                self.grPCM.plotItem.setRange(yRange=[-temp_max, temp_max])
+                self.pcm_plot.plotItem.setRange(yRange=[-temp_max, temp_max])
             temp_fft_max = np.max(self.audio.fft_data)
             if temp_fft_max > self.max_fft:
                 self.max_fft = temp_fft_max
-                self.grFFT.plotItem.setRange(yRange=[0, 1])
-            self.pbLevel.setValue(1000 * temp_max / self.max_normal)
+                self.fft_plot.plotItem.setRange(yRange=[0, 1])
+            self.sound_lvl.setValue(1000 * temp_max / self.max_normal)
             plot = pyqtgraph.mkPen(color='b')
-            self.grPCM.plot(self.audio.points_range, self.audio.data, pen=plot, clear=True)
+            self.pcm_plot.plot(self.audio.points_range, self.audio.data, pen=plot, clear=True)
             plot = pyqtgraph.mkPen(color='r')
-            self.grFFT.plot(self.audio.fft_frequency, self.audio.fft_data / self.max_fft, pen=plot, clear=True)
+            self.fft_plot.plot(self.audio.fft_frequency, self.audio.fft_data / self.max_fft, pen=plot, clear=True)
         QtCore.QTimer.singleShot(1, self.update)
 
 

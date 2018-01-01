@@ -88,7 +88,9 @@ class AudioStream:
     def read_data_chunk(self):
         while True:
             try:
-                self.data = np.fromstring(self.stream.read(self.chunk_size), dtype=np.int16) / self.scalar
+                raw_data = self.stream.read(self.chunk_size)
+                self.stream.write(raw_data)
+                self.data = np.fromstring(raw_data, dtype=np.int16) / self.scalar
                 self.fft_frequency, self.fft_data = fourier_frequency(self.data,
                                                                       self.devices_info[self.mic_id]['mic_rate'])
             except Exception:
@@ -100,6 +102,7 @@ class AudioStream:
                                           channels=1,
                                           rate=self.devices_info[self.mic_id]['mic_rate'],
                                           input=True,
+                                          output=True,
                                           frames_per_buffer=self.chunk_size)
 
         self.main_thread = Thread(target=self.read_data_chunk, args=())
