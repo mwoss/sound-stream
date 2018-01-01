@@ -51,6 +51,7 @@ def main():
         window = SoundStreamVisualization()
         window.show()
         window.update()
+        app.exec_()
     except KeyError as e:
         LOG.error_msg(str(e) + " - User level error")
     except MicrophoneDeviceNotFound as e:

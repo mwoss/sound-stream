@@ -1,7 +1,8 @@
-from PyQt4 import QtGui, QtCore
+"""
+Generated code from Qt Creator xml file using qtUI_converter
+"""
 
-# from PyQt5 import QtCore, QtGui
-# from PyQt4.uic.properties import QtCore, QtGui
+from PyQt4 import QtGui, QtCore
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
