@@ -1,4 +1,4 @@
-#Audio streaming with data visualization [WIP]
+# Audio streaming with data visualization [WIP]
 
 ## Usage
 ```angular2html
