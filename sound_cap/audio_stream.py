@@ -2,6 +2,8 @@ import pyaudio
 import time
 import numpy as np
 from threading import Thread
+from collections import deque
+from copy import deepcopy
 
 from sound_cap.utils.logger import Logger
 from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound, DataStreamVisualizationError
@@ -19,7 +21,6 @@ def fourier_frequency(data, rate):
 class AudioStream:
     def __init__(self, scalar=5, refresh_rate=10):
         self.audio_rec = pyaudio.PyAudio()
-        self.main_thread = None
         self.chunk_size = 4096
         self.refresh_rate = refresh_rate
         self.scalar = scalar
@@ -30,6 +31,8 @@ class AudioStream:
         self.fft_frequency = None
         self.mic_id = None
         self.stream = None
+        self.repeat_num = 5
+        self.queue = deque(maxlen=10)
 
     def validation_test(self, device_id, mics_info):
         LOG.log_msg("Checking device ID: {0}".format(device_id))
@@ -88,11 +91,20 @@ class AudioStream:
     def read_data_chunk(self):
         while True:
             try:
+                n = self.chunk_size // self.repeat_num
                 raw_data = self.stream.read(self.chunk_size)
-                self.stream.write(raw_data)
+
                 self.data = np.fromstring(raw_data, dtype=np.int16) / self.scalar
                 self.fft_frequency, self.fft_data = fourier_frequency(self.data,
                                                                       self.devices_info[self.mic_id]['mic_rate'])
+                copy = deepcopy(self.data)
+                if self.queue.__len__() > self.chunk_size:
+                    for i in range(0, self.repeat_num):
+                        self.data += self.queue[i * n] / (2**(self.repeat_num - i))
+                    self.data = self.data / (self.repeat_num + 1)
+                self.queue.append(copy)
+                self.stream.write(raw_data)
+
             except Exception:
                 raise DataStreamVisualizationError("Data processing error")
 
@@ -105,6 +117,6 @@ class AudioStream:
                                           output=True,
                                           frames_per_buffer=self.chunk_size)
 
-        self.main_thread = Thread(target=self.read_data_chunk, args=())
-        self.main_thread.daemon = True
-        self.main_thread.start()
+        main_thread = Thread(target=self.read_data_chunk, args=())
+        main_thread.daemon = True
+        main_thread.start()
