@@ -6,7 +6,7 @@ from collections import deque
 from copy import deepcopy
 
 from sound_cap.utils.logger import Logger
-from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound, DataStreamVisualizationError
+from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound
 
 LOG = Logger()
 
@@ -19,11 +19,10 @@ def fourier_frequency(data, rate):
 
 
 class AudioStream:
-    def __init__(self, scalar=5, refresh_rate=10):
+    def __init__(self, refresh_rate=10):
         self.audio_rec = pyaudio.PyAudio()
         self.chunk_size = 4096
         self.refresh_rate = refresh_rate
-        self.scalar = scalar
         self.devices_info = {}
         self.points_range = None
         self.data = None
@@ -91,22 +90,34 @@ class AudioStream:
     def read_data_chunk(self):
         while True:
             try:
-                n = self.chunk_size // self.repeat_num
                 raw_data = self.stream.read(self.chunk_size)
 
-                self.data = np.fromstring(raw_data, dtype=np.int16) / self.scalar
+                self.data = np.fromstring(raw_data, dtype=np.int16)
                 self.fft_frequency, self.fft_data = fourier_frequency(self.data,
                                                                       self.devices_info[self.mic_id]['mic_rate'])
-                copy = deepcopy(self.data)
-                if self.queue.__len__() > self.chunk_size:
-                    for i in range(0, self.repeat_num):
-                        self.data += self.queue[i * n] / (2**(self.repeat_num - i))
-                    self.data = self.data / (self.repeat_num + 1)
-                self.queue.append(copy)
-                self.stream.write(raw_data)
+                # copy = deepcopy(self.data)
+                # if self.queue.__len__() >= self.repeat_num:
+                #     for i in range(0, self.repeat_num):
+                #         self.data += self.queue[i] / (2 ** i)
+                #     # self.data += self.queue[0]
+                #     self.data = self.data / (self.repeat_num + 1)
+                # self.queue.append(copy)
+                shift = 1
+                t = np.fft.rfft(self.data)
+                t = np.roll(t, shift)
+                t[0:shift] = 0
+                nt = np.fft.irfft(t)
 
-            except Exception:
-                raise DataStreamVisualizationError("Data processing error")
+
+                # if self.queue.__len__() == 10:
+                #     self.data += self.queue[0]
+                #     self.data = self.data / 2
+                # self.queue.append(copy)
+                # self.stream.write(nt.tostring())
+                self.stream.write(self.data.tostring())
+
+            except (ValueError, TypeError):
+                raise
 
     def stream_start(self):
         self.initialization()

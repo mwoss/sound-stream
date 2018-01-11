@@ -1,5 +1,8 @@
 # Audio streaming with data visualization [WIP]
+Application allowing real-time sound streaming with visualization gathered data as frequency spectrum
+plot and pulse code modulation plot.
 
+Code can be used on Raspberry Pi, as well as on normal PC.
 ## Usage
 ```angular2html
  >> python3 stream_s.py

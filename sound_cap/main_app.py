@@ -7,8 +7,7 @@ from PyQt4 import QtGui, QtCore
 import sound_cap.ui.ui_main as ui_main
 from sound_cap.audio_stream import AudioStream
 from sound_cap.utils.logger import Logger
-from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound, \
-    DataStreamVisualizationError
+from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound
 
 LOG = Logger()
 
@@ -55,7 +54,7 @@ def main():
         LOG.error_msg(str(e) + " - User level error")
     except MicrophoneDeviceNotFound as e:
         LOG.error_msg(str(e) + " - Device level error")
-    except DataStreamVisualizationError as e:
+    except (ValueError, TypeError) as e:
         window.audio.audio_rec.close()
         LOG.error_msg(str(e) + " - Application level error")
     finally:
