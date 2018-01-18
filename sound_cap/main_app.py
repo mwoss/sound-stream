@@ -58,4 +58,5 @@ def main():
         window.audio.audio_rec.close()
         LOG.error_msg(str(e) + " - Application level error")
     finally:
+        LOG.log_msg("Application is closed")
         del app

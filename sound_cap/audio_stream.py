@@ -2,8 +2,7 @@ import pyaudio
 import time
 import numpy as np
 from threading import Thread
-from collections import deque
-from copy import deepcopy
+from audiolazy.lazy_analysis import stft, window
 
 from sound_cap.utils.logger import Logger
 from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound
@@ -30,8 +29,6 @@ class AudioStream:
         self.fft_frequency = None
         self.mic_id = None
         self.stream = None
-        self.repeat_num = 5
-        self.queue = deque(maxlen=10)
 
     def validation_test(self, device_id, mics_info):
         LOG.log_msg("Checking device ID: {0}".format(device_id))
@@ -88,40 +85,27 @@ class AudioStream:
                             self.devices_info[self.mic_id]['mic_rate']))
 
     def read_data_chunk(self):
+
+        @stft(size=2048, hop=682, wnd=window.hann, ola_wnd=window.hann)
+        def _roll_spectrum(data, shift=10):
+            abs_data = abs(np.fft.fft(data))
+            phases = np.angle(data)
+            shited_data = np.roll(abs_data, shift) * np.exp(1j * phases)
+            return np.fft.irfft(shited_data).real
+
         while True:
             try:
                 raw_data = self.stream.read(self.chunk_size)
-
-                self.data = np.fromstring(raw_data, dtype=np.int16)
+                self.data = np.fromstring(raw_data, dtype=np.float32)
                 self.fft_frequency, self.fft_data = fourier_frequency(self.data,
                                                                       self.devices_info[self.mic_id]['mic_rate'])
-                # copy = deepcopy(self.data)
-                # if self.queue.__len__() >= self.repeat_num:
-                #     for i in range(0, self.repeat_num):
-                #         self.data += self.queue[i] / (2 ** i)
-                #     # self.data += self.queue[0]
-                #     self.data = self.data / (self.repeat_num + 1)
-                # self.queue.append(copy)
-                shift = 1
-                t = np.fft.rfft(self.data)
-                t = np.roll(t, shift)
-                t[0:shift] = 0
-                nt = np.fft.irfft(t)
-
-
-                # if self.queue.__len__() == 10:
-                #     self.data += self.queue[0]
-                #     self.data = self.data / 2
-                # self.queue.append(copy)
-                # self.stream.write(nt.tostring())
-                self.stream.write(self.data.tostring())
-
+                self.stream.write(_roll_spectrum(self.data))
             except (ValueError, TypeError):
                 raise
 
     def stream_start(self):
         self.initialization()
-        self.stream = self.audio_rec.open(format=pyaudio.paInt16,
+        self.stream = self.audio_rec.open(format=pyaudio.paFloat32,
                                           channels=1,
                                           rate=self.devices_info[self.mic_id]['mic_rate'],
                                           input=True,
