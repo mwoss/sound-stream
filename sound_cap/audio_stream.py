@@ -3,6 +3,7 @@ import time
 import numpy as np
 from threading import Thread
 from audiolazy.lazy_analysis import stft, window
+from audiolazy.lazy_io import AudioIO
 
 from sound_cap.utils.logger import Logger
 from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound
@@ -11,7 +12,6 @@ LOG = Logger()
 
 
 def fourier_frequency(data, rate):
-    # smoothed_data = data * np.hamming(len(data))
     fft = np.abs(np.fft.fft(data))
     freq = np.fft.fftfreq(len(fft), 1.0 / rate)
     return freq[:int(len(freq) / 2)], fft[:int(len(fft) / 2)]
@@ -20,15 +20,16 @@ def fourier_frequency(data, rate):
 class AudioStream:
     def __init__(self, refresh_rate=10):
         self.audio_rec = pyaudio.PyAudio()
-        self.chunk_size = 4096
-        self.refresh_rate = refresh_rate
-        self.devices_info = {}
         self.points_range = None
         self.data = None
         self.fft_data = None
         self.fft_frequency = None
-        self.mic_id = None
-        self.stream = None
+        self.shift = 0
+        self.__chunk_size = 2048
+        self.__refresh_rate = refresh_rate
+        self.__devices_info = {}
+        self.__mic_id = None
+        self.__stream = None
 
     def validation_test(self, device_id, mics_info):
         LOG.log_msg("Checking device ID: {0}".format(device_id))
@@ -39,7 +40,7 @@ class AudioStream:
         try:
             stream = self.audio_rec.open(format=pyaudio.paInt16, channels=1,
                                          input_device_index=device_id,
-                                         frames_per_buffer=self.chunk_size,
+                                         frames_per_buffer=self.__chunk_size,
                                          rate=int(info["defaultSampleRate"]),
                                          input=True)
 
@@ -63,54 +64,56 @@ class AudioStream:
     def choose_mic(self):
         LOG.log_msg("Choosing microphone")
         time.sleep(0.2)
-        if len(self.devices_info) > 1:
-            for mic_k, mic_val in self.devices_info.items():
+        if len(self.__devices_info) > 1:
+            for mic_k, mic_val in self.__devices_info.items():
                 print("Mic ID: {0}, specs: {1}".format(mic_k, mic_val))
             return int(input("Chose device by ID: "))
         return 0
 
     def initialization(self):
         LOG.log_msg("Initializing")
-        self.devices_info = self.get_available_mics()
-        self.mic_id = self.choose_mic()
+        self.__devices_info = self.get_available_mics()
+        self.__mic_id = self.choose_mic()
 
-        if self.mic_id not in self.devices_info.keys():
+        if self.__mic_id not in self.__devices_info.keys():
             raise KeyError("Incorrect device ID")
 
-        self.chunk_size = int(self.devices_info[self.mic_id]['mic_rate'] / self.refresh_rate)
-        self.points_range = np.arange(self.chunk_size) / float(self.devices_info[self.mic_id]['mic_rate'])
+        self.__chunk_size = int(self.__devices_info[self.__mic_id]['mic_rate'] / self.__refresh_rate)
+        self.points_range = np.arange(self.__chunk_size) / float(self.__devices_info[self.__mic_id]['mic_rate'])
         LOG.log_msg("Streaming from device: {0} with ID: {1} at rate: {2} Hz"
-                    .format(self.devices_info[self.mic_id]['mic_name'],
-                            self.mic_id,
-                            self.devices_info[self.mic_id]['mic_rate']))
+                    .format(self.__devices_info[self.__mic_id]['mic_name'],
+                            self.__mic_id,
+                            self.__devices_info[self.__mic_id]['mic_rate']))
 
     def read_data_chunk(self):
+        chunk = self.__chunk_size
 
-        @stft(size=2048, hop=682, wnd=window.hann, ola_wnd=window.hann)
-        def _roll_spectrum(data, shift=10):
-            abs_data = abs(np.fft.fft(data))
-            phases = np.angle(data)
-            shited_data = np.roll(abs_data, shift) * np.exp(1j * phases)
-            return np.fft.irfft(shited_data).real
+        @stft(size=chunk, hop=682, wnd=window.hann, ola_wnd=window.hann)
+        def _roll_spectrum(data):
+            if self.shift != 0:
+                abs_data = abs(data)
+                phases = np.angle(data)
+                return np.roll(abs_data, self.shift) * np.exp(1j * phases)
+            return data
 
-        while True:
-            try:
-                raw_data = self.stream.read(self.chunk_size)
-                self.data = np.fromstring(raw_data, dtype=np.float32)
-                self.fft_frequency, self.fft_data = fourier_frequency(self.data,
-                                                                      self.devices_info[self.mic_id]['mic_rate'])
-                self.stream.write(_roll_spectrum(self.data))
-            except (ValueError, TypeError):
-                raise
+        with AudioIO(True) as pr:
+            pr.play(_roll_spectrum(pr.record()))
+            while True:
+                try:
+                    raw_data = self.__stream.read(self.__chunk_size)
+                    self.data = np.fromstring(raw_data, dtype=np.float32)
+                    self.fft_frequency, self.fft_data = \
+                        fourier_frequency(self.data, self.__devices_info[self.__mic_id]['mic_rate'])
+                except (ValueError, TypeError):
+                    raise
 
     def stream_start(self):
         self.initialization()
-        self.stream = self.audio_rec.open(format=pyaudio.paFloat32,
-                                          channels=1,
-                                          rate=self.devices_info[self.mic_id]['mic_rate'],
-                                          input=True,
-                                          output=True,
-                                          frames_per_buffer=self.chunk_size)
+        self.__stream = self.audio_rec.open(format=pyaudio.paFloat32,
+                                            channels=1,
+                                            rate=self.__devices_info[self.__mic_id]['mic_rate'],
+                                            input=True,
+                                            frames_per_buffer=self.__chunk_size)
 
         main_thread = Thread(target=self.read_data_chunk, args=())
         main_thread.daemon = True

@@ -39,6 +39,7 @@ class SoundStreamVisualization(QtGui.QMainWindow, ui_main.Ui_AudioVisualizer):
             self.pcm_plot.plot(self.audio.points_range, self.audio.data, pen=plot, clear=True)
             plot = pyqtgraph.mkPen(color='r')
             self.fft_plot.plot(self.audio.fft_frequency, self.audio.fft_data / self.max_fft, pen=plot, clear=True)
+            self.audio.shift = self.horizontalSlider.value()
         QtCore.QTimer.singleShot(1, self.update)
 
 
