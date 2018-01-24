@@ -1,6 +1,6 @@
-# Audio streaming with data visualization [WIP]
+# Audio streaming with data visualization
 Application allowing real-time sound streaming with visualization gathered data as frequency spectrum
-plot and pulse code modulation plot.
+plot and pulse code modulation plot. Program also allows to modulate voice in real-time using phase vocoder from audiolazy library.
 
 Code can be used on Raspberry Pi, as well as on normal PC.
 ## Usage
