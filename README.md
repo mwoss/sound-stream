@@ -18,9 +18,9 @@ located in folder sound_cap/utils
 
 ## Requirements
  - Python 3.X
- - Numpy 
- - Pyaudio 
- - PyQt4 
- - Pyqtgraph 
+ - numpy 
+ - pyaudio 
+ - PyQt4 with pyqtgraph
+ - audiolazy
 
 ##### Note: Instruction for installing necessary libraries on Raspberry Pi in libs_install_inst.pdf (Polish language). On PC you can use pip for almost every libraries, expect for PyQt4 on Windows. You have to download pyqt4 wheel file from [lfd.uci.edu](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyqt4) and execute it using pip install command.

@@ -64,7 +64,7 @@ class AudioStream:
     def choose_mic(self):
         LOG.log_msg("Choosing microphone")
         time.sleep(0.2)
-        if len(self.__devices_info) > 1:
+        if len(self.__devices_info) >= 1:
             for mic_k, mic_val in self.__devices_info.items():
                 print("Mic ID: {0}, specs: {1}".format(mic_k, mic_val))
             return int(input("Chose device by ID: "))
