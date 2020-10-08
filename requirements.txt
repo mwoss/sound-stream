@@ -1,0 +1,5 @@
+audiolazy==0.6
+numpy==1.19.2
+PyQt4==4.11
+PyAudio==0.2.11
+pyqtgraph==0.11.0

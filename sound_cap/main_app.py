@@ -4,12 +4,9 @@ import numpy as np
 import pyqtgraph
 from PyQt4 import QtGui, QtCore
 
-import sound_cap.ui.ui_main as ui_main
+import sound_cap.qt_ui as ui_main
 from sound_cap.audio_stream import AudioStream
-from sound_cap.utils.logger import Logger
-from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound
-
-LOG = Logger()
+from sound_cap.audio_exceptions import MicrophoneDeviceNotFound
 
 
 class SoundStreamVisualization(QtGui.QMainWindow, ui_main.Ui_AudioVisualizer):
@@ -43,21 +40,4 @@ class SoundStreamVisualization(QtGui.QMainWindow, ui_main.Ui_AudioVisualizer):
         QtCore.QTimer.singleShot(1, self.update)
 
 
-def main():
-    LOG.log_msg("Start sound streaming.")
-    app = QtGui.QApplication(argv)
-    try:
-        window = SoundStreamVisualization()
-        window.show()
-        window.update()
-        app.exec_()
-    except KeyError as e:
-        LOG.error_msg(str(e) + " - User level error")
-    except MicrophoneDeviceNotFound as e:
-        LOG.error_msg(str(e) + " - Device level error")
-    except (ValueError, TypeError) as e:
-        window.audio.audio_rec.close()
-        LOG.error_msg(str(e) + " - Application level error")
-    finally:
-        LOG.log_msg("Application is closed")
-        del app
+
