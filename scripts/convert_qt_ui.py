@@ -1,24 +1,30 @@
-from argparse import ArgumentParser
+from argparse import ArgumentParser, ArgumentTypeError
 
-from PyQt4 import uic
-
-
-def validate_path(path: str) -> bool:
-    return path.endswith(".ui")
+from PyQt5 import uic
 
 
-def ui_file_python_convert(file_name: str) -> None:
-    with open(file_name, 'r') as qtUi:
-        with open(file_name.replace('.ui', '.py'), 'w') as pythonUI:
-            uic.compileUi(qtUi, pythonUI, execute=False)
+def validate_path(path: str, file_extension: str) -> str:
+    if path.endswith(file_extension):
+        return path
+    raise ArgumentTypeError("Expected extension: {}".format(file_extension))
+
+
+def ui_file_python_convert(ui_file_path: str, output_file: str) -> None:
+    with open(ui_file_path, 'r') as ui_file:
+        with open(output_file, 'w') as python_file:
+            uic.compileUi(ui_file, python_file, execute=False)
 
 
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument(
-        "-f", "--file-path", type=validate_path,
-        help="Path to the UI definition file. Expected extension *.ui"
+        "ui_file", type=lambda path: validate_path(path, ".ui"),
+        help="UI definition file path. It should be *.ui file"
+    )
+    parser.add_argument(
+        "output_file", type=lambda path: validate_path(path, ".py"),
+        help="Output file path. It should be Python file."
     )
 
     args = parser.parse_args()
-    ui_file_python_convert(args.file)
+    ui_file_python_convert(args.ui_file, args.output_file)
