@@ -1,13 +1,13 @@
-import pyaudio
+import logging
 import time
-import numpy as np
 from threading import Thread
+
+import numpy as np
+import pyaudio
 from audiolazy.lazy_analysis import stft, window
 from audiolazy.lazy_io import AudioIO
 
 from sound_cap.audio_exceptions import MicrophoneDeviceNotFound
-
-import logging
 
 
 def fourier_frequency(data, rate):
