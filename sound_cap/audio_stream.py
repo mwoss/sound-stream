@@ -1,14 +1,13 @@
-import pyaudio
+import logging
 import time
-import numpy as np
 from threading import Thread
+
+import numpy as np
+import pyaudio
 from audiolazy.lazy_analysis import stft, window
 from audiolazy.lazy_io import AudioIO
 
-from sound_cap.utils.logger import Logger
-from sound_cap.utils.audio_exceptions import MicrophoneDeviceNotFound
-
-LOG = Logger()
+from sound_cap.audio_exceptions import MicrophoneDeviceNotFound
 
 
 def fourier_frequency(data, rate):
@@ -32,37 +31,39 @@ class AudioStream:
         self.__stream = None
 
     def validation_test(self, device_id, mics_info):
-        LOG.log_msg("Checking device ID: {0}".format(device_id))
+        logging.info("Checking device ID: {0}".format(device_id))
         info = self.audio_rec.get_device_info_by_index(device_id)
         if info["maxInputChannels"] <= 0:
-            LOG.error_msg("Max input channels <= 0")
+            logging.error("Max input channels <= 0")
             return
         try:
-            stream = self.audio_rec.open(format=pyaudio.paInt16, channels=1,
-                                         input_device_index=device_id,
-                                         frames_per_buffer=self.__chunk_size,
-                                         rate=int(info["defaultSampleRate"]),
-                                         input=True)
+            stream = self.audio_rec.open(
+                format=pyaudio.paInt16, channels=1,
+                input_device_index=device_id,
+                frames_per_buffer=self.__chunk_size,
+                rate=int(info["defaultSampleRate"]),
+                input=True
+            )
 
             stream.close()
-            LOG.log_msg("Device ID: {0} is working properly".format(device_id))
+            logging.info("Device ID: {0} is working properly".format(device_id))
             mics_info[device_id] = {'mic_name': info['name'],
                                     'mic_rate': int(info["defaultSampleRate"])}
-        except ValueError:
-            LOG.error_msg("Device ID: {0} isnt working".format(device_id))
+        except (ValueError, OSError):
+            logging.error("Device ID: {0} isnt working".format(device_id))
 
     def get_available_mics(self):
-        LOG.log_msg("Searching for microphones devices")
+        logging.info("Searching for microphones devices")
         mics_info = {}
         for device in range(self.audio_rec.get_device_count()):
             self.validation_test(device, mics_info)
         if len(mics_info) == 0:
             raise MicrophoneDeviceNotFound("No mics found")
-        LOG.log_msg("Microphones found: {0}".format(mics_info))
+        logging.info("Microphones found: {0}".format(mics_info))
         return mics_info
 
     def choose_mic(self):
-        LOG.log_msg("Choosing microphone")
+        logging.info("Choosing microphone")
         time.sleep(0.2)
         if len(self.__devices_info) >= 1:
             for mic_k, mic_val in self.__devices_info.items():
@@ -71,7 +72,7 @@ class AudioStream:
         return 0
 
     def initialization(self):
-        LOG.log_msg("Initializing")
+        logging.info("Initializing")
         self.__devices_info = self.get_available_mics()
         self.__mic_id = self.choose_mic()
 
@@ -80,10 +81,10 @@ class AudioStream:
 
         self.__chunk_size = int(self.__devices_info[self.__mic_id]['mic_rate'] / self.__refresh_rate)
         self.points_range = np.arange(self.__chunk_size) / float(self.__devices_info[self.__mic_id]['mic_rate'])
-        LOG.log_msg("Streaming from device: {0} with ID: {1} at rate: {2} Hz"
-                    .format(self.__devices_info[self.__mic_id]['mic_name'],
-                            self.__mic_id,
-                            self.__devices_info[self.__mic_id]['mic_rate']))
+        logging.info("Streaming from device: {0} with ID: {1} at rate: {2} Hz"
+                     .format(self.__devices_info[self.__mic_id]['mic_name'],
+                             self.__mic_id,
+                             self.__devices_info[self.__mic_id]['mic_rate']))
 
     def read_data_chunk(self):
         chunk = self.__chunk_size
@@ -109,11 +110,13 @@ class AudioStream:
 
     def stream_start(self):
         self.initialization()
-        self.__stream = self.audio_rec.open(format=pyaudio.paFloat32,
-                                            channels=1,
-                                            rate=self.__devices_info[self.__mic_id]['mic_rate'],
-                                            input=True,
-                                            frames_per_buffer=self.__chunk_size)
+        self.__stream = self.audio_rec.open(
+            format=pyaudio.paFloat32,
+            channels=1,
+            rate=self.__devices_info[self.__mic_id]['mic_rate'],
+            input=True,
+            frames_per_buffer=self.__chunk_size
+        )
 
         main_thread = Thread(target=self.read_data_chunk, args=())
         main_thread.daemon = True
