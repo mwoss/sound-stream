@@ -20,7 +20,9 @@ python3 convert_qt_ui.py ../resources/qt_ui.ui
 
 
 ## Application setup
-On PC and Mac you can use install almost all dependencies using `pip`.
+On PC and Mac you can use install almost all dependencies using `pip`.  
+If you have problem installing PyAudio via `pip` try installing it via Python wheel. 
+You can find list of available wheel [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pyaudio)
 
 Instruction for installing necessary libraries on Raspberry Pi in libs_install_inst.pdf (Polish language).
  

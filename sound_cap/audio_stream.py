@@ -49,7 +49,7 @@ class AudioStream:
             logging.info("Device ID: {0} is working properly".format(device_id))
             mics_info[device_id] = {'mic_name': info['name'],
                                     'mic_rate': int(info["defaultSampleRate"])}
-        except ValueError:
+        except (ValueError, OSError):
             logging.error("Device ID: {0} isnt working".format(device_id))
 
     def get_available_mics(self):
