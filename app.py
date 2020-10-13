@@ -3,25 +3,25 @@ from sys import argv
 
 from PyQt5.QtWidgets import QApplication
 
-from sound_cap.audio_exceptions import MicrophoneDeviceNotFound
-from sound_cap.main_app import SoundStreamVisualization
+from monitor.mics import choose_microphone
+from monitor.visualizer import SoundCaptureVisualizer
+
+logging.basicConfig(format="%(levelname)s - %(message)s", level=logging.INFO)
 
 
 def main():
+    microphone = choose_microphone()
+
     app = QApplication(argv)
-    window = SoundStreamVisualization()
+    visualizer = SoundCaptureVisualizer(microphone)
 
     try:
-        window.show()
-        window.update()
+        visualizer.show()
+        visualizer.update()
         app.exec_()
-    except KeyError as e:
-        logging.error(str(e) + " - User level error")
-    except MicrophoneDeviceNotFound as e:
-        logging.error(str(e) + " - Device level error")
     except (ValueError, TypeError) as e:
-        window.audio.audio_rec.close()
-        logging.error(str(e) + " - Application level error")
+        visualizer.close_sound_streaming()
+        logging.error(e + " - Application level error")
     finally:
         logging.info("Application is closed")
         del app
