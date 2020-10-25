@@ -8,19 +8,28 @@ from monitor.mics import Microphone, open_microphone_stream
 
 
 class AudioListener:
-    def __init__(self, mic: Microphone, refresh_rate: int = 20):
+    def __init__(self, mic: Microphone, sample_rate: int = 20):
         self.data = None
         self.fft_data = None
         self.fft_frequency = None
         self.phase_shift = 0
-        self.stream = open_microphone_stream(mic, refresh_rate)
+        self.stream = open_microphone_stream(mic, sample_rate)
 
     def run(self):
+        """
+        Run audio listener - reading data from audio input device (microphone).
+        Listening is performed in separate thread - non blocking.
+        """
         listener_thread = Thread(target=self._read_data_chunk, args=())
         listener_thread.daemon = True
         listener_thread.start()
 
     def _read_data_chunk(self):
+        """
+        Read data from input device (microphone) and apply roll spectrum algorithm on it.
+        Recorded audio is played back using AudioIO (from audiolazy library)
+        with spectrum modification applied on it too.
+        """
         chunk = self.stream.chunk_size
 
         @stft(size=chunk, hop=682, wnd=window.hann, ola_wnd=window.hann)
@@ -39,6 +48,12 @@ class AudioListener:
                 self._recalculate_fourier_frequencies()
 
     def _recalculate_fourier_frequencies(self):
+        """
+        Recalculates data (fft_frequency, fft_data) used for the sound frequency visualization.
+        Frequencies are calculated by applying fft onto raw data gathered from sound input device.
+        Only half of the data is resigned to values for better visualization experience -
+        first half of the data is usually mostly a 0 values.
+        """
         fft = np.abs(np.fft.fft(self.data))
         freq = np.fft.fftfreq(len(fft), 1.0 / self.stream.microphone.sample_rate)
 

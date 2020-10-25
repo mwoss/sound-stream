@@ -1,3 +1,9 @@
+"""
+Utility script to convert Qt UI specification to Python implementation.
+Qt specification file should use .ui file extension.
+Use --help command to see all available script parameters.
+"""
+
 from argparse import ArgumentParser, ArgumentTypeError
 
 from PyQt5 import uic
@@ -16,13 +22,15 @@ def ui_file_python_convert(ui_file_path: str, output_file: str) -> None:
 
 
 if __name__ == '__main__':
-    parser = ArgumentParser()
+    parser = ArgumentParser(description="Utility script to convert Qt UI specification to Python implementation.")
     parser.add_argument(
-        "ui_file", type=lambda path: validate_path(path, ".ui"),
+        "ui_file",
+        type=lambda path: validate_path(path, ".ui"),
         help="UI definition file path. It should be *.ui file"
     )
     parser.add_argument(
-        "output_file", type=lambda path: validate_path(path, ".py"),
+        "output_file",
+        type=lambda path: validate_path(path, ".py"),
         help="Output file path. It should be Python file."
     )
 

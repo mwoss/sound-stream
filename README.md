@@ -9,13 +9,13 @@ Shout out to Scott W Harden for sharing publication I based my project on: [SWHa
 ## Usage
 Running this application is dead simple, just execute below command :D
 ```shell script
-python3 app.py
+python app.py
 ```
 
 for compiling .ui XML files created via QT Creator run `convert_qt_ui` script 
-located in folder `script/` directory
+located in folder `scripts/` directory
 ```shell script 
-python3 convert_qt_ui.py ../resources/qt_ui.ui
+python convert_qt_ui.py ../resources/qt_ui.ui qt_ui.py
 ```
 
 
