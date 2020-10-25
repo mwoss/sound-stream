@@ -20,7 +20,7 @@ class SoundCaptureVisualizer(QMainWindow, Ui_AudioVisualizer):
 
         self._points_range = np.arange(int(input_device.sample_rate / 20)) / float(input_device.sample_rate)
 
-        self._audio = AudioListener(input_device, refresh_rate=20)
+        self._audio = AudioListener(input_device, sample_rate=20)
         self._audio.run()
 
     def update(self):

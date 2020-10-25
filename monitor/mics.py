@@ -13,6 +13,9 @@ class MicrophoneDeviceNotFound(Exception):
 
 
 class Microphone:
+    """
+    Data class (compatibility with older Python version) that stores all basic information about microphone.
+    """
     def __init__(self, mic_id: int, mic_name: str, sample_rate: int, input_channels: int):
         self.mic_id = mic_id
         self.mic_name = mic_name
@@ -29,11 +32,14 @@ class Microphone:
 
 
 class MicrophoneStream:
-
-    def __init__(self, stream: pyaudio.Stream, microphone: Microphone, refresh_rate: int):
+    """
+    Convenient wrapper around pyaudio.Stream.
+    Used for easy and painless use of pyaudio.Stream.read method with Microphone object.
+    """
+    def __init__(self, stream: pyaudio.Stream, microphone: Microphone, sample_rate: int):
         self.stream = stream
         self.microphone = microphone
-        self.chunk_size = int(microphone.sample_rate / refresh_rate)
+        self.chunk_size = int(microphone.sample_rate / sample_rate)
 
     def read(self) -> str:
         return self.stream.read(self.chunk_size)
@@ -42,18 +48,28 @@ class MicrophoneStream:
         self.stream.close()
 
 
-def open_microphone_stream(microphone: Microphone, refresh_rate: int = 20) -> MicrophoneStream:
+def open_microphone_stream(microphone: Microphone, sample_rate: int = 20) -> MicrophoneStream:
+    """
+    Opens PyAudio data stream using given microphone.
+    :param microphone: Microphone used for data streaming
+    :param sample_rate: Sampling rate of the input device
+    :return: MicrophoneStream object - a convenient wrapper around PyAudio stream class
+    """
     stream = audio_rec.open(
         format=pyaudio.paFloat32,
         channels=1,
         rate=microphone.sample_rate,
         input=True,
-        frames_per_buffer=int(microphone.sample_rate / refresh_rate)
+        frames_per_buffer=int(microphone.sample_rate / sample_rate)
     )
-    return MicrophoneStream(stream, microphone, refresh_rate)
+    return MicrophoneStream(stream, microphone, sample_rate)
 
 
 def choose_microphone() -> Microphone:
+    """
+    Prompt a user input and ask user to choose microphone by entering device ID.
+    :return: Chosen microphone as Microphone data class
+    """
     logging.debug("Searching for microphones devices")
     devices_info = get_available_microphones()
 
@@ -72,6 +88,10 @@ def choose_microphone() -> Microphone:
 
 
 def get_available_microphones() -> Dict[int, Microphone]:
+    """
+    Search for all available microphones on given system an return dictionary with all of them.
+    :return: dictionary where key is device ID and value is a Microphone data class
+    """
     mics_info = {}
 
     for device_id in range(audio_rec.get_device_count()):
@@ -97,6 +117,13 @@ def get_available_microphones() -> Dict[int, Microphone]:
 
 
 def is_microphone_available(microphone: Microphone) -> bool:
+    """
+    Validates if given microphone can be used for data streaming.
+    Validation is done by opening testing record stream and reading HEALTH_CHECK_BUFFER_SIZE of data.
+    If reading succeed given microphone is marked as working and ready to use by application.
+    :param microphone: microphone to validate
+    :return: True if microphone is working properly and data stream can be opened, otherwise False
+    """
     logging.debug("Checking availability of recoding device with ID: {}".format(microphone.mic_id))
 
     if microphone.input_channels <= 0:
