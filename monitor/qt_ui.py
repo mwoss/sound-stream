@@ -89,4 +89,6 @@ class Ui_AudioVisualizer(object):
         self.label_fft.setText(_translate("AudioVisualizer", "Frequency data:"))
         self.pcm_normal.setText(_translate("AudioVisualizer", "Pulse-code modulation:"))
         self.label.setText(_translate("AudioVisualizer", "Phase manipulator:"))
+
+
 from pyqtgraph import PlotWidget

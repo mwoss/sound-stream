@@ -57,5 +57,5 @@ class AudioListener:
         fft = np.abs(np.fft.fft(self.data))
         freq = np.fft.fftfreq(len(fft), 1.0 / self.stream.microphone.sample_rate)
 
-        self.fft_frequency = freq[:int(len(freq) / 2)]
-        self.fft_data = fft[:int(len(fft) / 2)]
+        self.fft_frequency = freq[: int(len(freq) / 2)]
+        self.fft_data = fft[: int(len(fft) / 2)]
