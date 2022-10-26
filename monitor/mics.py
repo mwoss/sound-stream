@@ -16,6 +16,7 @@ class Microphone:
     """
     Data class (compatibility with older Python version) that stores all basic information about microphone.
     """
+
     def __init__(self, mic_id: int, mic_name: str, sample_rate: int, input_channels: int):
         self.mic_id = mic_id
         self.mic_name = mic_name
@@ -24,10 +25,7 @@ class Microphone:
 
     def __str__(self) -> str:
         return "Microphone ID: {}, Microphone name: {}, Sample rate: {}Hz, Input channels".format(
-            self.mic_id,
-            self.mic_name,
-            self.sample_rate,
-            self.input_channels
+            self.mic_id, self.mic_name, self.sample_rate, self.input_channels
         )
 
 
@@ -36,6 +34,7 @@ class MicrophoneStream:
     Convenient wrapper around pyaudio.Stream.
     Used for easy and painless use of pyaudio.Stream.read method with Microphone object.
     """
+
     def __init__(self, stream: pyaudio.Stream, microphone: Microphone, sample_rate: int):
         self.stream = stream
         self.microphone = microphone
@@ -60,7 +59,7 @@ def open_microphone_stream(microphone: Microphone, sample_rate: int = 20) -> Mic
         channels=1,
         rate=microphone.sample_rate,
         input=True,
-        frames_per_buffer=int(microphone.sample_rate / sample_rate)
+        frames_per_buffer=int(microphone.sample_rate / sample_rate),
     )
     return MicrophoneStream(stream, microphone, sample_rate)
 
@@ -79,11 +78,11 @@ def choose_microphone() -> Microphone:
         raise KeyError("Incorrect device ID")
 
     chosen_mic = devices_info[mic_id]
-    logging.info("Streaming from device: {} with ID: {} at rate: {} Hz".format(
-        chosen_mic.mic_name,
-        chosen_mic.mic_id,
-        chosen_mic.sample_rate
-    ))
+    logging.info(
+        "Streaming from device: {} with ID: {} at rate: {} Hz".format(
+            chosen_mic.mic_name, chosen_mic.mic_id, chosen_mic.sample_rate
+        )
+    )
     return chosen_mic
 
 
@@ -98,9 +97,9 @@ def get_available_microphones() -> Dict[int, Microphone]:
         device_info = audio_rec.get_device_info_by_index(device_id)
         microphone = Microphone(
             mic_id=device_id,
-            mic_name=device_info['name'],
+            mic_name=device_info["name"],
             sample_rate=int(device_info["defaultSampleRate"]),
-            input_channels=device_info["maxInputChannels"]
+            input_channels=device_info["maxInputChannels"],
         )
 
         if is_microphone_available(microphone):
@@ -137,7 +136,7 @@ def is_microphone_available(microphone: Microphone) -> bool:
             input_device_index=microphone.mic_id,
             frames_per_buffer=HEALTH_CHECK_BUFFER_SIZE,
             rate=microphone.sample_rate,
-            input=True
+            input=True,
         )
         stream.close()
         logging.debug("Device ID: {} is working properly".format(microphone.mic_id))

@@ -2,7 +2,7 @@
 Application allowing real-time sound streaming with visualization gathered data as frequency spectrum
 plot and pulse code modulation plot. Program also allows to modulate voice in real-time using phase vocoder from audiolazy library.
 
-Code can be used on Raspberry Pi, as well as on the desktops.
+Code can be used on Raspberry Pi, as well as on the desktops. Application has been tested using Python 3.7.
 
 Shout out to Scott W Harden for sharing publication I based my project on: [SWHarden.com](https://www.swharden.com/wp/2016-07-31-real-time-audio-monitor-with-pyqt/)
 

@@ -16,22 +16,18 @@ def validate_path(path: str, file_extension: str) -> str:
 
 
 def ui_file_python_convert(ui_file_path: str, output_file: str) -> None:
-    with open(ui_file_path, 'r') as ui_file:
-        with open(output_file, 'w') as python_file:
+    with open(ui_file_path, "r") as ui_file:
+        with open(output_file, "w") as python_file:
             uic.compileUi(ui_file, python_file, execute=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = ArgumentParser(description="Utility script to convert Qt UI specification to Python implementation.")
     parser.add_argument(
-        "ui_file",
-        type=lambda path: validate_path(path, ".ui"),
-        help="UI definition file path. It should be *.ui file"
+        "ui_file", type=lambda path: validate_path(path, ".ui"), help="UI definition file path. It should be *.ui file"
     )
     parser.add_argument(
-        "output_file",
-        type=lambda path: validate_path(path, ".py"),
-        help="Output file path. It should be Python file."
+        "output_file", type=lambda path: validate_path(path, ".py"), help="Output file path. It should be Python file."
     )
 
     args = parser.parse_args()

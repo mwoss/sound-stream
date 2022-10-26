@@ -3,14 +3,14 @@ import pyqtgraph
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QMainWindow
 
-from monitor.mics import Microphone
 from monitor.listener import AudioListener
+from monitor.mics import Microphone
 from monitor.qt_ui import Ui_AudioVisualizer
 
 
 class SoundCaptureVisualizer(QMainWindow, Ui_AudioVisualizer):
     def __init__(self, input_device: Microphone, parent=None):
-        pyqtgraph.setConfigOption('background', 'w')
+        pyqtgraph.setConfigOption("background", "w")
         super(SoundCaptureVisualizer, self).__init__(parent)
         self.setupUi(self)
         self.fft_plot.plotItem.showGrid(True, True, 0.7)
@@ -38,9 +38,9 @@ class SoundCaptureVisualizer(QMainWindow, Ui_AudioVisualizer):
                 self.fft_plot.plotItem.setRange(yRange=[0, 1])
 
             self.sound_lvl.setValue(1000 * temp_max / self.max_normal)
-            plot = pyqtgraph.mkPen(color='b')
+            plot = pyqtgraph.mkPen(color="b")
             self.pcm_plot.plot(self._points_range, self._audio.data, pen=plot, clear=True)
-            plot = pyqtgraph.mkPen(color='r')
+            plot = pyqtgraph.mkPen(color="r")
             self.fft_plot.plot(self._audio.fft_frequency, self._audio.fft_data / self.max_fft, pen=plot, clear=True)
             self._audio.phase_shift = self.horizontalSlider.value()
 
